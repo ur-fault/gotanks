@@ -27,6 +27,10 @@ func (g *Group) AddEntity(entity Entity) {
 	g.entities = append(g.entities, entity)
 }
 
+func (g *Group) AddEntities(entities ...Entity) {
+	g.entities = append(g.entities, entities...)
+}
+
 func (g *Group) RemoveEntity(entity Entity) {
 	for i, e := range g.entities {
 		if e == entity {

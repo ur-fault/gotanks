@@ -10,11 +10,8 @@ import (
 )
 
 func run() {
-	tanksSprite := sprites["tank_blue"]
-	println(tanksSprite.Frame().String())
-
 	cfg := pixelgl.WindowConfig{
-		Title:     "Pixel Rocks!",
+		Title:     "Go, Tanks",
 		Bounds:    pixel.R(0, 0, 500, 500),
 		VSync:     true,
 		Resizable: true,
@@ -26,18 +23,19 @@ func run() {
 
 	win.SetSmooth(true)
 
-	tank := MakeTank(win, 300, radians(200))
+	tank := MakeTank(20, radians(200), 55)
+	tank.SetWidth(3)
+	println(tank.Scale())
 
 	cam := MakeCamera(&tank.entity, win)
+	cam.SetZoom(1.0 / 30)
+	println(cam.PixelsPerUnit())
 
-	// make walls
-	walls_ := make([]Entity, 0, 10)
-	for i := 0; i < 10; i++ {
-		walls_ = append(walls_, NewWall(pixel.V(float64(i*56), 0)))
-	}
-	walls := MakeGroup(walls_...)
+	walls := MakeGroup(FillWalls(pixel.V(0, 0), 10, 1, 1, 1)...)
+	walls.AddEntities(FillWalls(pixel.V(0, 0), 1, 10, 1, 1)...)
 
-	last := time.Now()
+	start := time.Now()
+	last := start
 	for !win.Closed() {
 		dt := time.Since(last).Seconds()
 		last = time.Now()
@@ -46,7 +44,7 @@ func run() {
 			win.SetClosed(true)
 		}
 
-		win.Clear(colornames.Greenyellow)
+		win.Clear(colornames.Firebrick)
 
 		walls.Update(dt, win)
 		tank.Update(dt, win)

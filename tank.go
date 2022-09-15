@@ -4,6 +4,7 @@ import (
 	"github.com/faiface/pixel"
 	"github.com/faiface/pixel/imdraw"
 	"github.com/faiface/pixel/pixelgl"
+	"golang.org/x/image/colornames"
 	"math"
 )
 
@@ -14,9 +15,11 @@ type Tank struct {
 	barrel         *pixel.Sprite
 	barrelRotation float64 // in radians, relative to the tank
 	debugPoint     pixel.Vec
+	velocity       float64
+	acceleration   float64
 }
 
-func MakeTank(win *pixelgl.Window, speed float64, rotSpeed float64) Tank {
+func MakeTank(speed float64, rotSpeed float64, acceleration float64) Tank {
 	tank := Tank{}
 	tank.sprite = sprites["tankBody_green_outline"]
 	tank.position = pixel.ZV
@@ -24,10 +27,12 @@ func MakeTank(win *pixelgl.Window, speed float64, rotSpeed float64) Tank {
 	tank.speed = speed
 	tank.rotSpeed = rotSpeed
 	tank.barrel = sprites["tankGreen_barrel2_outline"]
+	tank.acceleration = acceleration
 	return tank
 }
 
 func (t *Tank) Update(dt float64, win *pixelgl.Window) {
+	targetVelocity := 0.0
 	if win.Pressed(pixelgl.KeyA) || win.Pressed(pixelgl.KeyLeft) {
 		t.rotation += t.rotSpeed * dt
 	}
@@ -35,19 +40,28 @@ func (t *Tank) Update(dt float64, win *pixelgl.Window) {
 		t.rotation -= t.rotSpeed * dt
 	}
 	if win.Pressed(pixelgl.KeyW) || win.Pressed(pixelgl.KeyUp) {
-		t.position.X += t.speed * dt * math.Cos(t.Facing())
-		t.position.Y += t.speed * dt * math.Sin(t.Facing())
+		targetVelocity = t.speed
 	}
 
 	if win.Pressed(pixelgl.KeyS) || win.Pressed(pixelgl.KeyDown) {
-		t.position.X -= t.speed * dt * math.Cos(t.Facing())
-		t.position.Y -= t.speed * dt * math.Sin(t.Facing())
+		targetVelocity = -t.speed
 	}
+
+	if t.velocity < targetVelocity {
+		t.velocity = math.Min(t.velocity+t.acceleration*dt, targetVelocity)
+	}
+	if t.velocity > targetVelocity {
+		t.velocity = math.Max(t.velocity-t.acceleration*dt, targetVelocity)
+	}
+
+	t.position.X += t.velocity * dt * math.Cos(t.Facing())
+	t.position.Y += t.velocity * dt * math.Sin(t.Facing())
 }
 
 func (t *Tank) Draw(cam *Camera) {
+	// call default Draw
+	t.entity.Draw(cam)
 	win := cam.Window()
-	t.sprite.Draw(win, t.Matrix())
 
 	barrelMatrix := pixel.IM.
 		Rotated(pixel.ZV, radians(180)+t.barrelRotation).
@@ -56,12 +70,10 @@ func (t *Tank) Draw(cam *Camera) {
 
 	t.barrel.Draw(win, barrelMatrix)
 
-	im := imdraw.New(win.Canvas())
-	im.Color = pixel.RGB(1, 0, 0)
-	im.SetMatrix(cam.RevMatrix())
-	println(win.MousePosition().Sub(win.Bounds().Center()).String())
-	im.Push(win.MousePosition().Sub(win.Bounds().Center()))
-	im.Circle(5, 0)
+	im := imdraw.New(nil)
+	im.Color = colornames.Aliceblue
+	im.Push(cam.ViewPortToWorld(win.MousePosition().Sub(win.Bounds().Center())))
+	im.Circle(cam.ToUnits(2), 0)
 	im.Draw(win)
 }
 

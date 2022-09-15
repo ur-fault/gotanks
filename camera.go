@@ -44,17 +44,17 @@ func (c *Camera) SetRotate(rotate bool) {
 
 func (c *Camera) Matrix() pixel.Matrix {
 	if c.rotate {
-		return pixel.IM.Moved(c.parent.Position().Scaled(-1)).Moved(c.window.Bounds().Center()).Rotated(c.window.Bounds().Center(), -c.parent.Rotation())
+		return pixel.IM.Moved(c.parent.Position().Scaled(-1)).Moved(c.window.Bounds().Center()).Rotated(c.window.Bounds().Center(), -c.parent.Rotation()).Scaled(c.window.Bounds().Center(), c.PixelsPerUnit())
 	} else {
-		return pixel.IM.Moved(c.parent.Position().Scaled(-1)).Moved(c.window.Bounds().Center())
+		return pixel.IM.Moved(c.parent.Position().Scaled(-1)).Moved(c.window.Bounds().Center()).Scaled(c.window.Bounds().Center(), c.PixelsPerUnit())
 	}
 }
 
 func (c *Camera) RevMatrix() pixel.Matrix {
 	if c.rotate {
-		return pixel.IM.Moved(c.parent.Position()).Rotated(c.parent.Position(), c.parent.Rotation())
+		return pixel.IM.Moved(c.parent.Position()).Rotated(c.parent.Position(), c.parent.Rotation()).Scaled(c.parent.Position(), c.UnitsPerPixel())
 	} else {
-		return pixel.IM.Moved(c.parent.Position())
+		return pixel.IM.Moved(c.parent.Position()).Scaled(c.parent.Position(), c.UnitsPerPixel())
 	}
 }
 
@@ -74,6 +74,31 @@ func (c *Camera) SetWindow(window *pixelgl.Window) {
 	c.window = window
 }
 
+// Apply applies the camera's matrix to the window. Should be called before drawing or changing space (like drawing UI)
 func (c *Camera) Apply() {
 	c.window.SetMatrix(c.Matrix())
+}
+
+func (c *Camera) ViewPortToWorld(viewport pixel.Vec) pixel.Vec {
+	return c.RevMatrix().Project(viewport)
+}
+
+func (c *Camera) WorldToViewPort(world pixel.Vec) pixel.Vec {
+	return c.Matrix().Project(world)
+}
+
+func (c *Camera) UnitsPerPixel() float64 {
+	return 1 / (c.Window().Bounds().Size().Y * c.zoom)
+}
+
+func (c *Camera) PixelsPerUnit() float64 {
+	return c.zoom * c.Window().Bounds().Size().Y
+}
+
+func (c *Camera) ToUnits(pixels float64) float64 {
+	return pixels * c.UnitsPerPixel()
+}
+
+func (c *Camera) ToPixels(units float64) float64 {
+	return units * c.PixelsPerUnit()
 }

@@ -32,6 +32,10 @@ type Entity interface {
 	SetWidth(width float64)
 	// Matrix returns the matrix of the entity
 	Matrix() pixel.Matrix
+	// Anchor returns the anchor of the entity for scale and rotation (from 0 to 1)
+	Anchor() pixel.Vec
+	// SetAnchor sets anchor of rotation and scale
+	SetAnchor(anchor pixel.Vec)
 }
 
 type entity struct {
@@ -39,6 +43,7 @@ type entity struct {
 	sprite   *pixel.Sprite
 	rotation float64
 	scale    float64
+	anchor   pixel.Vec
 }
 
 func (e *entity) Position() pixel.Vec {
@@ -91,4 +96,12 @@ func (e *entity) SetWidth(width float64) {
 
 func (e *entity) Matrix() pixel.Matrix {
 	return pixel.IM.Moved(e.position).Rotated(e.position, e.rotation).Scaled(e.position, e.scale)
+}
+
+func (e *entity) Anchor() pixel.Vec {
+	return e.anchor
+}
+
+func (e *entity) SetAnchor(anchor pixel.Vec) {
+	e.anchor = anchor
 }
