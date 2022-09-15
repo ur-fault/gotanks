@@ -44,10 +44,10 @@ func (g *Group) Update(dt float64, win *pixelgl.Window) {
 	}
 }
 
-func (g *Group) Draw(win *pixelgl.Window) {
+func (g *Group) Draw(cam *Camera) {
 	if g.enabled {
 		for _, e := range g.entities {
-			e.Draw(win)
+			e.Draw(cam)
 		}
 	}
 }

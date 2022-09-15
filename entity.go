@@ -6,14 +6,14 @@ import (
 )
 
 type Entity interface {
-	// GetPosition returns the position of the entity
-	GetPosition() pixel.Vec
-	// GetSprite returns the sprite of the entity
-	GetSprite() *pixel.Sprite
-	// GetRotation returns the rotation in radians of the entity
-	GetRotation() float64
-	// GetScale returns the scale of the entity
-	GetScale() float64
+	// Position returns the position of the entity
+	Position() pixel.Vec
+	// Sprite returns the sprite of the entity
+	Sprite() *pixel.Sprite
+	// Rotation returns the rotation in radians of the entity
+	Rotation() float64
+	// Scale returns the scale of the entity
+	Scale() float64
 	// SetPosition sets the position of the entity
 	SetPosition(position pixel.Vec)
 	// SetRotation sets the rotation in radians of the entity
@@ -23,13 +23,15 @@ type Entity interface {
 	// Update updates the entity
 	Update(dt float64, win *pixelgl.Window)
 	// Draw draws the entity
-	Draw(win *pixelgl.Window)
-	// GetSize returns the size of the entity
-	GetSize() pixel.Vec
-	// GetBounds returns the bounds of the entity
-	GetBounds() pixel.Rect
+	Draw(cam *Camera)
+	// Size returns the size of the entity
+	Size() pixel.Vec
+	// Bounds returns the bounds of the entity
+	Bounds() pixel.Rect
 	// SetWidth sets the width of the entity
 	SetWidth(width float64)
+	// Matrix returns the matrix of the entity
+	Matrix() pixel.Matrix
 }
 
 type entity struct {
@@ -39,19 +41,19 @@ type entity struct {
 	scale    float64
 }
 
-func (e *entity) GetPosition() pixel.Vec {
+func (e *entity) Position() pixel.Vec {
 	return e.position
 }
 
-func (e *entity) GetSprite() *pixel.Sprite {
+func (e *entity) Sprite() *pixel.Sprite {
 	return e.sprite
 }
 
-func (e *entity) GetRotation() float64 {
+func (e *entity) Rotation() float64 {
 	return e.rotation
 }
 
-func (e *entity) GetScale() float64 {
+func (e *entity) Scale() float64 {
 	return e.scale
 }
 
@@ -71,18 +73,22 @@ func (e *entity) Update(dt float64, win *pixelgl.Window) {
 	// TODO
 }
 
-func (e *entity) Draw(win *pixelgl.Window) {
-	e.sprite.Draw(win, pixel.IM.Moved(e.position).Rotated(e.position, e.rotation).Scaled(e.position, e.scale))
+func (e *entity) Draw(cam *Camera) {
+	e.sprite.Draw(cam.Window(), e.Matrix())
 }
 
-func (e *entity) GetSize() pixel.Vec {
+func (e *entity) Size() pixel.Vec {
 	return e.sprite.Frame().Size()
 }
 
-func (e *entity) GetBounds() pixel.Rect {
+func (e *entity) Bounds() pixel.Rect {
 	return e.sprite.Frame()
 }
 
 func (e *entity) SetWidth(width float64) {
-	e.scale = width / e.GetSize().X
+	e.SetScale(width / e.Size().X)
+}
+
+func (e *entity) Matrix() pixel.Matrix {
+	return pixel.IM.Moved(e.position).Rotated(e.position, e.rotation).Scaled(e.position, e.scale)
 }

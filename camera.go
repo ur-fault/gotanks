@@ -5,29 +5,75 @@ import (
 	"github.com/faiface/pixel/pixelgl"
 )
 
-type Camera interface {
-	// GetPosition returns the position of the camera
-	GetPosition() pixel.Vec
-	// GetRotation returns the rotation in radians of the camera
-	GetRotation() float64
-	// GetZoom returns the scale of the camera
-	GetZoom() float64
-	// SetPosition sets the position of the camera
-	SetPosition(position pixel.Vec)
-	// SetRotation sets the rotation in radians of the camera
-	SetRotation(rotation float64)
-	// SetZoom sets the scale of the camera
-	SetZoom(zoom float64)
-	// GetWindow returns the window of the camera
-	GetWindow() *pixelgl.Window
-	// GetWindowSize returns the size of the window
-	GetWindowSize() pixel.Vec
-	// GetMatrix returns the matrix of the camera
-	GetMatrix() pixel.Matrix
-	// GetRatio returns the ratio of the camera
-	GetRatio() float64
-	// ToViewpoint converts a point from the world to the camera's viewpoint
-	ToViewpoint(point pixel.Vec) pixel.Vec
-	// ToWorld converts a point from the camera's viewpoint to the world
-	ToWorld(point pixel.Vec) pixel.Vec
+type Camera struct {
+	parent Entity
+	rotate bool
+	zoom   float64
+	window *pixelgl.Window
+}
+
+func MakeCamera(parent Entity, window *pixelgl.Window) Camera {
+	return Camera{
+		parent: parent,
+		rotate: false,
+		zoom:   1,
+		window: window,
+	}
+}
+
+func NewCamera(parent Entity, window *pixelgl.Window) *Camera {
+	cam := MakeCamera(parent, window)
+	return &cam
+}
+
+func (c *Camera) Parent() Entity {
+	return c.parent
+}
+
+func (c *Camera) SetParent(parent Entity) {
+	c.parent = parent
+}
+
+func (c *Camera) Rotate() bool {
+	return c.rotate
+}
+
+func (c *Camera) SetRotate(rotate bool) {
+	c.rotate = rotate
+}
+
+func (c *Camera) Matrix() pixel.Matrix {
+	if c.rotate {
+		return pixel.IM.Moved(c.parent.Position().Scaled(-1)).Moved(c.window.Bounds().Center()).Rotated(c.window.Bounds().Center(), -c.parent.Rotation())
+	} else {
+		return pixel.IM.Moved(c.parent.Position().Scaled(-1)).Moved(c.window.Bounds().Center())
+	}
+}
+
+func (c *Camera) RevMatrix() pixel.Matrix {
+	if c.rotate {
+		return pixel.IM.Moved(c.parent.Position()).Rotated(c.parent.Position(), c.parent.Rotation())
+	} else {
+		return pixel.IM.Moved(c.parent.Position())
+	}
+}
+
+func (c *Camera) Zoom() float64 {
+	return c.zoom
+}
+
+func (c *Camera) SetZoom(zoom float64) {
+	c.zoom = zoom
+}
+
+func (c *Camera) Window() *pixelgl.Window {
+	return c.window
+}
+
+func (c *Camera) SetWindow(window *pixelgl.Window) {
+	c.window = window
+}
+
+func (c *Camera) Apply() {
+	c.window.SetMatrix(c.Matrix())
 }

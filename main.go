@@ -15,7 +15,7 @@ func run() {
 
 	cfg := pixelgl.WindowConfig{
 		Title:     "Pixel Rocks!",
-		Bounds:    pixel.R(0, 0, 480, 360),
+		Bounds:    pixel.R(0, 0, 500, 500),
 		VSync:     true,
 		Resizable: true,
 	}
@@ -27,6 +27,8 @@ func run() {
 	win.SetSmooth(true)
 
 	tank := MakeTank(win, 300, radians(200))
+
+	cam := MakeCamera(&tank.entity, win)
 
 	// make walls
 	walls_ := make([]Entity, 0, 10)
@@ -46,11 +48,13 @@ func run() {
 
 		win.Clear(colornames.Greenyellow)
 
-		tank.Update(dt, win)
-		tank.Draw(win)
-
 		walls.Update(dt, win)
-		walls.Draw(win)
+		tank.Update(dt, win)
+
+		cam.Apply()
+
+		walls.Draw(&cam)
+		tank.Draw(&cam)
 
 		win.Update()
 	}
